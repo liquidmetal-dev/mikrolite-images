@@ -32,7 +32,7 @@ WORKDIR ${LINUX_DIR}
 
 ARG KERNEL_CONFIG
 
-RUN curl -L -o .config ${KERNEL_CONFIG}
+COPY ${KERNEL_CONFIG} .config
 
 RUN make LOCALVERSION= olddefconfig
 RUN make LOCALVERSION= -j32
