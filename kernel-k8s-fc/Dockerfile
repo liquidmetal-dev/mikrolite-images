@@ -32,35 +32,7 @@ WORKDIR ${LINUX_DIR}
 
 ARG KERNEL_CONFIG
 
-RUN curl -L -o microvm-kernel.config ${KERNEL_CONFIG}
-COPY k8s_additions.config .
-RUN ./scripts/kconfig/merge_config.sh -m microvm-kernel.config k8s_additions.config
-
-# Could also be done like this
-# RUN curl -L -o .config ${KERNEL_CONFIG}
-# RUN ./scripts/config --file .config \
-#     --enable CONFIG_NETFILTER \
-#     --enable CONFIG_NETFILTER_ADVANCED \
-#     --enable CONFIG_NETFILTER_XT_TARGET_REDIRECT \
-#     --enable CONFIG_NETFILTER_XT_MATCH_COMMENT \
-#     --enable  CONFIG_NETFILTER_XT_TARGET_MARK \
-#     --enable CONFIG_IP_SET \
-#     --enable CONFIG_NF_CONNTRACK \
-#     --enable CONFIG_NF_CONNTRACK_MARK \
-#     --enable CONFIG_NF_CONNTRACK_SECMARK \
-#     --enable CONFIG_NF_CONNTRACK_PROCFS \
-#     --enable CONFIG_NF_NAT \
-#     --enable CONFIG_NF_NAT_REDIRECT \
-#     --enable CONFIG_NF_NAT_MASQUERADE \
-#     --enable CONFIG_NETFILTER_XTABLES \
-#     --enable CONFIG_KEYS \
-#     --enable CONFIG_IP_NF_TARGET_MASQUERADE \
-#     --enable CONFIG_NETFILTER_XT_MATCH_ADDRTYPE \
-#     --enable CONFIG_NETFILTER_XT_MATCH_CONNTRACK \
-#     --enable CONFIG_NETFILTER_XT_MATCH_IPVS \
-#     --enable CONFIG_NETFILTER_XT_MATCH_MULTIPORT \
-#     --enable CONFIG_IP_NF_NAT
-
+COPY ${KERNEL_CONFIG} .config
 
 
 RUN make LOCALVERSION= olddefconfig
