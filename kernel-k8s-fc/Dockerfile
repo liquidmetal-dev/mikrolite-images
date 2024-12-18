@@ -37,10 +37,12 @@ COPY ${KERNEL_CONFIG} .config
 
 RUN make LOCALVERSION= olddefconfig
 RUN make LOCALVERSION= -j32
+RUN make LOCALVERSION= modules_install 
 
 RUN cp vmlinux /boot/vmlinux && \
     cp .config /boot/config-${KERNEL_VERSION}
 
 FROM scratch
 LABEL org.opencontainers.image.source=https://github.com/liquidmetal-dev/mikrolite-images
-COPY --from=builder /boot /
+COPY --from=builder /boot /boot
+COPY --from=builder /lib/modules /lib/modules
