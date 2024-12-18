@@ -38,7 +38,7 @@ RUN make LOCALVERSION= olddefconfig
 RUN make LOCALVERSION= -j32
 
 RUN cp vmlinux /boot/vmlinux && \
-    cp .config /boot/config-${KERNEL_VERSION}
+    cp .config /boot/config-${KERNEL_VERSION}.0
 
 FROM scratch
 LABEL org.opencontainers.image.source=https://github.com/liquidmetal-dev/mikrolite-images
