@@ -5,7 +5,7 @@ on:
 
 defaults:
   run:
-    working-directory: ubuntu-fc
+    working-directory: ubuntu
 
 jobs:
   build-and-publish:
