@@ -1,10 +1,5 @@
 ARG RKE2_VERSION="v1.28.3+rke2r1"
 
-# this is a temporary hack to ensure the kernel config is in the right place
-# otherwise modprobe will fail. In the future we can mount the kernel image
-# using cloud-init / ignition
-FROM ghcr.io/liquidmetal-dev/cloudhypervisor-kernel:6.2 AS kernel
-
 FROM ubuntu:22.04
 LABEL org.opencontainers.image.source=https://github.com/liquidmetal-dev/mikrolite-images
 
@@ -42,5 +37,3 @@ RUN mkdir /root/rke2-artifacts && \
     curl -sfL https://get.rke2.io --output install.sh
 
 # To run the install: INSTALL_RKE2_ARTIFACT_PATH=/root/rke2-artifacts sh install.sh
-
-COPY --from=kernel /boot /boot
