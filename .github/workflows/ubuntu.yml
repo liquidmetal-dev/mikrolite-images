@@ -1,4 +1,4 @@
-name: Ubuntu (FC) - Build and publish
+name: Ubuntu - Build and publish
 
 on:
   workflow_dispatch:
