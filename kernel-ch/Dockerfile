@@ -41,4 +41,4 @@ RUN cp arch/x86/boot/compressed/vmlinux.bin ./output/vmlinux.bin&& \
 
 FROM scratch
 LABEL org.opencontainers.image.source=https://github.com/liquidmetal-dev/mikrolite-images
-COPY --from=builder /usr/src/linux/output   /boot
+COPY --from=builder /usr/src/linux/output   /

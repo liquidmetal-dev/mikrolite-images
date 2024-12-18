@@ -43,4 +43,4 @@ RUN cp vmlinux /boot/vmlinux && \
 
 FROM scratch
 LABEL org.opencontainers.image.source=https://github.com/liquidmetal-dev/mikrolite-images
-COPY --from=builder /boot /boot
+COPY --from=builder /boot /
