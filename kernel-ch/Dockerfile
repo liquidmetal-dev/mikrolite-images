@@ -13,6 +13,7 @@ RUN apt-get update -y && \
     libssl-dev          \
     ca-certificates     \
     kmod                \
+    rsync               \
     curl                \
     wget
 
@@ -39,6 +40,13 @@ RUN mkdir output
 RUN cp arch/x86/boot/compressed/vmlinux.bin ./output/vmlinux.bin&& \
     cp .config ./output/config-${KERNEL_VERSION}.0
 
-FROM scratch
+RUN mkdir output_headers
+RUN make LOCALVERSION= headers_install INSTALL_HDR_PATH=./output_headers/linux-headers-${KERNEL_VERSION}.0
+
+FROM scratch AS kernel
 LABEL org.opencontainers.image.source=https://github.com/liquidmetal-dev/mikrolite-images
 COPY --from=builder /usr/src/linux/output   /
+
+FROM scratch AS headers
+LABEL org.opencontainers.image.source=https://github.com/liquidmetal-dev/mikrolite-images
+COPY --from=builder /usr/src/linux/output_headers  /
