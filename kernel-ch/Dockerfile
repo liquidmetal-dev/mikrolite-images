@@ -34,7 +34,8 @@ WORKDIR ${LINUX_DIR}
 ARG KERNEL_CONFIG
 
 RUN curl -L -o .config ${KERNEL_CONFIG}
-RUN make LOCALVERSION= -j32
+#RUN make LOCALVERSION= -j32
+RUN KCFLAGS="-Wa,-mx86-used-note=no" make bzImage -j32
 
 RUN mkdir output
 RUN cp arch/x86/boot/compressed/vmlinux.bin ./output/vmlinux.bin&& \
