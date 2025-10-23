@@ -1,20 +1,8 @@
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
-    bc                  \
-    bison               \
-    build-essential     \
-    gcc                 \
-    flex                \
-    git                 \
-    libelf-dev          \
-    libncurses-dev      \
-    libssl-dev          \
-    ca-certificates     \
-    kmod                \
-    curl                \
-    wget
+    python3 bc binutils bison dwarves flex gcc git gnupg2 gzip libelf-dev libncurses5-dev libssl-dev make openssl pahole perl-base rsync tar xz-utils
 
 ENV SRC_DIR=/usr/src            \
     DIST_DIR=/dist              \

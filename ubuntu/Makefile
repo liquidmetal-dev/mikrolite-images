@@ -1,6 +1,6 @@
 REGISTRY?=ghcr.io/liquidmetal-dev
 IMAGE_NAME?=$(REGISTRY)/ubuntu
-TAG?=22.04
+TAG?=24.04
 
 build:
 	docker build -t $(IMAGE_NAME):$(TAG) .
