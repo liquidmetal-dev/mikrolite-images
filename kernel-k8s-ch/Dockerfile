@@ -32,11 +32,23 @@ WORKDIR ${LINUX_DIR}
 
 ARG KERNEL_CONFIG
 
-RUN curl -L -o .config ${KERNEL_CONFIG}
-RUN make LOCALVERSION= olddefconfig
+RUN curl -fL -o .config ${KERNEL_CONFIG}
 COPY k8s_additions.config k8s_additions-fragment
-RUN ./scripts/kconfig/merge_config.sh .config k8s_additions-fragment
-RUN make LOCALVERSION= -j32
+# Merge fragment into base, then let Kconfig resolve dependencies
+RUN ./scripts/kconfig/merge_config.sh -m .config k8s_additions-fragment \
+ && make LOCALVERSION= olddefconfig
+# Fail the build if any requested k8s symbol did not survive dependency resolution
+RUN set -eu; rc=0; \
+    while IFS= read -r line; do \
+      case "$line" in ''|\#*) continue;; esac; \
+      sym=${line%%=*}; val=${line#*=}; \
+      if [ "$val" = n ]; then want="# $sym is not set"; else want="$line"; fi; \
+      if ! grep -qxF "$want" .config; then \
+        echo "DROPPED: wanted [$want] got [$(grep -w "$sym" .config || echo absent)]"; rc=1; \
+      fi; \
+    done < k8s_additions-fragment; \
+    [ "$rc" -eq 0 ] || { echo 'ERROR: k8s options did not survive the config merge'; exit 1; }
+RUN KCFLAGS="-Wa,-mx86-used-note=no" make LOCALVERSION= bzImage -j$(nproc)
 
 RUN mkdir output
 RUN cp arch/x86/boot/compressed/vmlinux.bin ./output/vmlinux.bin&& \
