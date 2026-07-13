@@ -31,12 +31,33 @@ RUN mkdir -p ${SRC_DIR} ${DIST_DIR} && \
 WORKDIR ${LINUX_DIR}
 
 ARG KERNEL_CONFIG
+ARG KERNEL_FRAGMENTS
 
 COPY ${KERNEL_CONFIG} .config
+COPY configs/ /tmp/k8s-configs/
 
+# Merge the k8s fragment(s) onto the base config, then let Kconfig resolve
+# dependencies deterministically.
+RUN set -eu; frags=""; for f in ${KERNEL_FRAGMENTS}; do frags="$frags /tmp/k8s-configs/$f"; done; \
+    ./scripts/kconfig/merge_config.sh -m .config $frags \
+ && make LOCALVERSION= olddefconfig
 
-RUN make LOCALVERSION= olddefconfig
-RUN make LOCALVERSION= -j32
+# Fail the build if any requested option did not survive dependency resolution
+# (merge_config.sh only warns on drops).
+RUN set -eu; rc=0; \
+    for f in ${KERNEL_FRAGMENTS}; do \
+      while IFS= read -r line; do \
+        case "$line" in ''|\#*) continue;; esac; \
+        sym=${line%%=*}; val=${line#*=}; \
+        if [ "$val" = n ]; then want="# $sym is not set"; else want="$line"; fi; \
+        if ! grep -qxF "$want" .config; then \
+          echo "DROPPED: wanted [$want] got [$(grep -w "$sym" .config || echo absent)]"; rc=1; \
+        fi; \
+      done < /tmp/k8s-configs/$f; \
+    done; \
+    [ "$rc" -eq 0 ] || { echo 'ERROR: k8s options did not survive the config merge'; exit 1; }
+
+RUN make LOCALVERSION= -j$(nproc)
 
 
 RUN cp vmlinux /boot/vmlinux && \
