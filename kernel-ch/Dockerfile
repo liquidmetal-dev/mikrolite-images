@@ -34,6 +34,15 @@ WORKDIR ${LINUX_DIR}
 ARG KERNEL_CONFIG
 
 RUN curl -L -o .config ${KERNEL_CONFIG}
+
+# Fail the build if any option is enabled as a loadable module: microVM
+# images boot with no initrd/module filesystem, so a modular option is
+# silently non-functional.
+RUN if grep -E '=m$' .config; then \
+      echo "ERROR: kernel modules enabled above — all options must be y or disabled for microVM images" >&2; \
+      exit 1; \
+    fi
+
 #RUN make LOCALVERSION= -j32
 RUN KCFLAGS="-Wa,-mx86-used-note=no" make bzImage -j32
 

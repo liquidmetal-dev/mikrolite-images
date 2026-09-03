@@ -23,6 +23,15 @@ ARG KERNEL_CONFIG
 COPY ${KERNEL_CONFIG} .config
 
 RUN make LOCALVERSION= olddefconfig
+
+# Fail the build if any option is enabled as a loadable module: microVM
+# images boot with no initrd/module filesystem, so a modular option is
+# silently non-functional.
+RUN if grep -E '=m$' .config; then \
+      echo "ERROR: kernel modules enabled above — all options must be y or disabled for microVM images" >&2; \
+      exit 1; \
+    fi
+
 RUN make LOCALVERSION= -j32
 
 RUN cp vmlinux /boot/vmlinux && \

@@ -1,0 +1,20 @@
+name: Lint kernel configs - No modules
+
+on:
+  pull_request:
+    paths:
+      - "**/*.config"
+      - "hack/check-no-modules.sh"
+      - ".github/workflows/lint-kernel-config.yml"
+
+jobs:
+  check-no-modules:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for loadable kernel modules in config fragments
+        run: |
+          configs=$(find . -name '*.config' -not -path '*/out/*')
+          ./hack/check-no-modules.sh $configs
