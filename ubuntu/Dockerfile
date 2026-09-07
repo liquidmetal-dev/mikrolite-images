@@ -1,5 +1,5 @@
 ARG UBUNTU_VERSION="24.04"
-ARG GUEST_AGENT_VERSION="0.1.0"
+ARG GUEST_AGENT_VERSION="0.3.0"
 
 FROM ubuntu:${UBUNTU_VERSION}
 LABEL org.opencontainers.image.source=https://github.com/liquidmetal-dev/mikrolite-images
