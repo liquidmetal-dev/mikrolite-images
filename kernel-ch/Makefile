@@ -14,6 +14,7 @@ build:
 		-t $(IMAGE_NAME):6.2 \
 		--build-arg KERNEL_VERSION=6.2 \
 		--build-arg KERNEL_CONFIG=$(KERNEL_CONFIG_URL) \
+		--build-arg KERNEL_FRAGMENTS="erofs.config" \
 		.
 
 	docker build \
@@ -21,6 +22,7 @@ build:
 		-t $(IMAGE_NAME):6.2-headers \
 		--build-arg KERNEL_VERSION=6.2 \
 		--build-arg KERNEL_CONFIG=$(KERNEL_CONFIG_URL) \
+		--build-arg KERNEL_FRAGMENTS="erofs.config" \
 		.
 
 push:

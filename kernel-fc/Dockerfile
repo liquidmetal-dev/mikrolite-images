@@ -19,10 +19,28 @@ RUN mkdir -p ${SRC_DIR} ${DIST_DIR} && \
 WORKDIR ${LINUX_DIR}
 
 ARG KERNEL_CONFIG
+ARG KERNEL_FRAGMENTS
 
 COPY ${KERNEL_CONFIG} .config
+COPY configs/ /tmp/configs/
 
 RUN make LOCALVERSION= olddefconfig
+
+# Fail the build if any option from a fragment did not survive dependency
+# resolution. The fragments are already part of .config (the Makefile
+# concatenates them), so this only checks.
+RUN set -eu; rc=0; \
+    for f in ${KERNEL_FRAGMENTS}; do \
+      while IFS= read -r line || [ -n "$line" ]; do \
+        case "$line" in ''|\#*) continue;; esac; \
+        sym=${line%%=*}; val=${line#*=}; \
+        if [ "$val" = n ]; then want="# $sym is not set"; else want="$line"; fi; \
+        if ! grep -qxF "$want" .config; then \
+          echo "DROPPED: wanted [$want] got [$(grep -w "$sym" .config || echo absent)]"; rc=1; \
+        fi; \
+      done < /tmp/configs/$f; \
+    done; \
+    [ "$rc" -eq 0 ] || { echo 'ERROR: fragment options did not survive the config merge'; exit 1; }
 
 # Fail the build if any option is enabled as a loadable module: microVM
 # images boot with no initrd/module filesystem, so a modular option is
