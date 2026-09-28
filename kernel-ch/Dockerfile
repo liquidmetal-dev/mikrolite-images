@@ -33,7 +33,9 @@ WORKDIR ${LINUX_DIR}
 
 ARG KERNEL_CONFIG
 
-RUN curl -L -o .config ${KERNEL_CONFIG}
+RUN curl -fL -o .config ${KERNEL_CONFIG}
+
+RUN make LOCALVERSION= olddefconfig
 
 # Fail the build if any option is enabled as a loadable module: microVM
 # images boot with no initrd/module filesystem, so a modular option is
