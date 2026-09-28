@@ -5,6 +5,7 @@ on:
     paths:
       - "**/*.config"
       - "hack/check-no-modules.sh"
+      - "hack/check-fragments-match.sh"
       - ".github/workflows/lint-kernel-config.yml"
 
 jobs:
@@ -18,3 +19,7 @@ jobs:
         run: |
           configs=$(find . -name '*.config' -not -path '*/out/*')
           ./hack/check-no-modules.sh $configs
+      - name: Check that the copies of the EROFS fragment match
+        run: |
+          copies=$(find . -name erofs.config -not -path '*/out/*' | sort)
+          ./hack/check-fragments-match.sh $copies

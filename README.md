@@ -29,7 +29,7 @@ and two rootfs flavours:
 
 ## Why the kernels have no loadable modules
 
-MicroVMs booted by Flintlock start straight into the kernel with no initrd and no mechanism to load kernel modules at runtime. Every driver a guest needs (virtio, networking, filesystem, etc.) must therefore be **built directly into the kernel** (`=y`), not built as a loadable module (`=m`).
+MicroVMs booted by Flintlock have no mechanism to load kernel modules at runtime. Most boot straight into the kernel with no initrd. Flintlock's overlay volume mode boots with an initrd that Flintlock provides, and that initrd carries no modules either. Every driver a guest needs (virtio, networking, filesystem, etc.) must therefore be **built directly into the kernel** (`=y`), not built as a loadable module (`=m`).
 
 This invariant is enforced twice:
 
@@ -48,6 +48,8 @@ This invariant is enforced twice:
 | [`rke2/`](rke2) | `ghcr.io/liquidmetal-dev/node-rke2-airgapped` | Ubuntu `22.04`-based RKE2 node rootfs, pre-loaded with RKE2 release artifacts for airgapped/offline installation. |
 
 Each kernel image is built from real upstream `linux-stable` source, using kernel `.config`s sourced from the Firecracker/Cloud Hypervisor projects and merged with the additional config fragments in each directory's `configs/` folder.
+
+Every kernel also gets the `erofs.config` fragment, which enables the EROFS filesystem. Flintlock's overlay volume mode presents the root filesystem as a read-only EROFS image. The fragment is copied into each kernel directory because each directory is its own docker build context; [`hack/check-fragments-match.sh`](hack/check-fragments-match.sh) fails the lint when the copies differ.
 
 ## Building locally
 

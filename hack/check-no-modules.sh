@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fails if any of the given kernel config fragment files enable an option as
-# a loadable module (=m). microVM images boot with no initrd/module
-# filesystem, so a modular option is silently non-functional.
+# a loadable module (=m). microVM images have no module filesystem and no way
+# to load a module at runtime, so a modular option is silently non-functional.
 set -euo pipefail
 
 if [ "$#" -eq 0 ]; then

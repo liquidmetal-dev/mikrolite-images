@@ -43,8 +43,8 @@ RUN set -eu; rc=0; \
     [ "$rc" -eq 0 ] || { echo 'ERROR: fragment options did not survive the config merge'; exit 1; }
 
 # Fail the build if any option is enabled as a loadable module: microVM
-# images boot with no initrd/module filesystem, so a modular option is
-# silently non-functional.
+# images have no module filesystem and no way to load a module at runtime,
+# so a modular option is silently non-functional.
 RUN if grep -E '=m$' .config; then \
       echo "ERROR: kernel modules enabled above — all options must be y or disabled for microVM images" >&2; \
       exit 1; \
