@@ -84,7 +84,7 @@ docker buildx imagetools inspect ghcr.io/liquidmetal-dev/firecracker-kernel:6.1 
   --format '{{json .Image.Config.Labels}}'
 ```
 
-`make push` refuses to publish a timestamped tag that is already in the registry.
+`make push` never replaces a timestamped tag that is already in the registry. If the tag holds a different image, nothing is pushed. If it holds the image being pushed, the tag is skipped, so a `make push` that failed part way can be run again. The publish workflows run one at a time for each image.
 
 ## Building locally
 

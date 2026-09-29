@@ -37,8 +37,10 @@ Every kernel build is published as `<short tag>-<BUILD_ID>` (e.g. `6.1-20260929-
 
 - The tagging lives in [`hack/kernel-image.mk`](hack/kernel-image.mk), which every kernel `Makefile` includes. It provides `BUILD_ID`, the `image_tags` and `image_labels` helpers, `record_build_id`, and the `push` target. Do not write tags or a `push` target by hand in a kernel `Makefile`.
 - `BUILD_ID` is the UTC build start time, `YYYYMMDD-HHMM`. `make build` writes it to `out/build-id` and `make push` reads it back, because the two are separate runs. The publish workflows resolve it once and export it.
-- **Never overwrite a timestamped tag.** [`hack/push-kernel-image.sh`](hack/push-kernel-image.sh) checks the registry before pushing and fails if a timestamped tag exists, or if it cannot tell. Do not bypass or weaken that check.
-- A new kernel component must set `TAGS` to the short tags it publishes, include `hack/kernel-image.mk`, end its `build` recipe with `$(record_build_id)`, and ignore `out/`.
+- **Never overwrite a timestamped tag.** [`hack/push-kernel-image.sh`](hack/push-kernel-image.sh) checks the registry before pushing. It fails if a timestamped tag exists with a different digest from the local image, or if it cannot tell. A tag with the same digest is skipped, not pushed, so that a push that failed part way can be run again. Do not bypass or weaken that check.
+- The same script fails if the local short tag is not the same image as the local timestamped tag, because the short tag is pushed as it is locally.
+- Each kernel publish workflow has a `concurrency` group named after the image it publishes (`publish-<image>`), so that two runs cannot both find a tag absent and then both push it. ghcr has no setting that makes tags immutable, so a `make push` run by hand is not covered by this.
+- A new kernel component must set `TAGS` to the short tags it publishes, include `hack/kernel-image.mk`, end its `build` recipe with `$(record_build_id)`, and ignore `out/`. Its publish workflow needs a `concurrency` group of its own.
 - The second argument of `image_labels` is the kernel version label and must match the `KERNEL_VERSION` build arg of the same `docker build`.
 
 ## Build and verify
