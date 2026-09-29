@@ -47,7 +47,7 @@ This invariant is enforced twice:
 | [`ubuntu/`](ubuntu) | `ghcr.io/liquidmetal-dev/ubuntu` | Ubuntu `24.04` rootfs with networking, systemd and cloud-init configured, and [guest-agent](https://github.com/liquidmetal-dev/guest-agent) installed and enabled as a systemd service. |
 | [`rke2/`](rke2) | `ghcr.io/liquidmetal-dev/node-rke2-airgapped` | Ubuntu `22.04`-based RKE2 node rootfs, pre-loaded with RKE2 release artifacts for airgapped/offline installation. |
 
-Each kernel image is built from real upstream `linux-stable` source, using kernel `.config`s sourced from the Firecracker/Cloud Hypervisor projects and merged with the additional config fragments in each directory's `configs/` folder.
+Each kernel image is built from real upstream `linux-stable` source, using kernel `.config`s sourced from the Firecracker/Cloud Hypervisor projects and merged with the additional config fragments in each directory's `configs/` folder (`kernel-k8s-ch/` keeps its fragments at the directory root).
 
 Every kernel also gets the `erofs.config` fragment, which enables the EROFS filesystem. Flintlock's overlay volume mode presents the root filesystem as a read-only EROFS image. The fragment is copied into each kernel directory because each directory is its own docker build context; [`hack/check-fragments-match.sh`](hack/check-fragments-match.sh) fails the lint when a copy is missing or the copies differ.
 
