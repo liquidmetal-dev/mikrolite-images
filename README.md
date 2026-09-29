@@ -49,7 +49,7 @@ This invariant is enforced twice:
 
 Each kernel image is built from real upstream `linux-stable` source, using kernel `.config`s sourced from the Firecracker/Cloud Hypervisor projects and merged with the additional config fragments in each directory's `configs/` folder.
 
-Every kernel also gets the `erofs.config` fragment, which enables the EROFS filesystem. Flintlock's overlay volume mode presents the root filesystem as a read-only EROFS image. The fragment is copied into each kernel directory because each directory is its own docker build context; [`hack/check-fragments-match.sh`](hack/check-fragments-match.sh) fails the lint when the copies differ.
+Every kernel also gets the `erofs.config` fragment, which enables the EROFS filesystem. Flintlock's overlay volume mode presents the root filesystem as a read-only EROFS image. The fragment is copied into each kernel directory because each directory is its own docker build context; [`hack/check-fragments-match.sh`](hack/check-fragments-match.sh) fails the lint when a copy is missing or the copies differ.
 
 ## Building locally
 
