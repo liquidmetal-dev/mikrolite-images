@@ -2,6 +2,11 @@ REGISTRY?=ghcr.io/liquidmetal-dev
 IMAGE?=firecracker-kernel-k8s
 IMAGE_NAME?=$(REGISTRY)/$(IMAGE)
 
+# The short tags this image is published under.
+TAGS := 6.1 5.10
+
+include ../hack/kernel-image.mk
+
 OUT_DIR := out
 
 # Firecracker release to pull the base guest configs from. Pinned for
@@ -17,7 +22,8 @@ $(OUT_DIR):
 build: $(OUT_DIR)
 	curl -fL -o $(OUT_DIR)/microvm-kernel-ci-x86_64-6.1.config $(GUEST_CONFIG_URL)/microvm-kernel-ci-x86_64-6.1.config
 	docker build \
-		-t $(IMAGE_NAME):6.1 \
+		$(call image_tags,6.1) \
+		$(call image_labels,6.1,6.1) \
 		--build-arg KERNEL_VERSION=6.1 \
 		--build-arg KERNEL_CONFIG=$(OUT_DIR)/microvm-kernel-ci-x86_64-6.1.config \
 		--build-arg KERNEL_FRAGMENTS="additional-61.config k8s_additions.config erofs.config" \
@@ -25,12 +31,11 @@ build: $(OUT_DIR)
 
 	curl -fL -o $(OUT_DIR)/microvm-kernel-ci-x86_64-5.10.config $(GUEST_CONFIG_URL_510)/microvm-kernel-ci-x86_64-5.10.config
 	docker build \
-		-t $(IMAGE_NAME):5.10 \
+		$(call image_tags,5.10) \
+		$(call image_labels,5.10,5.10.199) \
 		--build-arg KERNEL_VERSION=5.10.199 \
 		--build-arg KERNEL_CONFIG=$(OUT_DIR)/microvm-kernel-ci-x86_64-5.10.config \
 		--build-arg KERNEL_FRAGMENTS="k8s_additions.config erofs.config" \
 		.
 
-push:
-	docker push $(IMAGE_NAME):6.1
-	docker push $(IMAGE_NAME):5.10
+	$(record_build_id)

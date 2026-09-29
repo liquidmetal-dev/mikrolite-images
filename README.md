@@ -49,7 +49,42 @@ This invariant is enforced twice:
 
 Each kernel image is built from real upstream `linux-stable` source, using kernel `.config`s sourced from the Firecracker/Cloud Hypervisor projects and merged with the additional config fragments in each directory's `configs/` folder (`kernel-k8s-ch/` keeps its fragments at the directory root).
 
+Kernel images are published under a moving tag and a timestamped one, see [Kernel image tags](#kernel-image-tags).
+
 Every kernel also gets the `erofs.config` fragment, which enables the EROFS filesystem. Flintlock's overlay volume mode presents the root filesystem as a read-only EROFS image. The fragment is copied into each kernel directory because each directory is its own docker build context; [`hack/check-fragments-match.sh`](hack/check-fragments-match.sh) fails the lint when a copy is missing or the copies differ.
+
+## Kernel image tags
+
+Every kernel build is published under two tags:
+
+| Tag | Example | Behaviour |
+|---|---|---|
+| `<version>-<build id>` | `6.1-20260929-1432` | Names one build and is never overwritten. |
+| `<version>` | `6.1` | Moves to the newest build each time one is published. |
+
+The build id is the UTC time the build started, as `YYYYMMDD-HHMM`, so the tags of an image sort from oldest to newest. Variants keep their suffix ahead of the build id: `5.10-no-acpi-20260929-1432`, `6.2-headers-20260929-1432`. All the variants from one publish share a build id.
+
+Use the short tag to follow the latest kernel, and a timestamped tag to stay on a known build or to go back to an older one:
+
+```
+ghcr.io/liquidmetal-dev/firecracker-kernel:6.1-20260929-1432
+```
+
+Each image also carries labels that say what is inside it:
+
+| Label | Value |
+|---|---|
+| `org.opencontainers.image.version` | The timestamped tag the image was published as. |
+| `org.opencontainers.image.created` | When the build started. |
+| `org.opencontainers.image.revision` | The commit of this repository it was built from. |
+| `dev.liquidmetal.kernel.version` | The `linux-stable` tag that was compiled, e.g. `5.10.245`. |
+
+```bash
+docker buildx imagetools inspect ghcr.io/liquidmetal-dev/firecracker-kernel:6.1 \
+  --format '{{json .Image.Config.Labels}}'
+```
+
+`make push` never replaces a timestamped tag that is already in the registry. If the tag holds a different image, nothing is pushed. If it holds the image being pushed, the tag is skipped, so a `make push` that failed part way can be run again. The publish workflows run one at a time for each image.
 
 ## Building locally
 
@@ -67,6 +102,13 @@ The target registry defaults to `ghcr.io/liquidmetal-dev` and can be overridden:
 make build REGISTRY=my-registry.example.com
 ```
 
+For the kernel images, `make build` records the build id it used in `out/build-id` and `make push` publishes that build. Set `BUILD_ID` on both to choose the value yourself:
+
+```bash
+make build BUILD_ID=20260929-1432
+make push BUILD_ID=20260929-1432
+```
+
 Docker (with buildx) is the only required tool — kernel builds compile the actual Linux kernel inside the build container, so expect kernel-image builds to take a while.
 
 ## Repository layout
@@ -78,7 +120,7 @@ kernel-ch/           Bare Cloud Hypervisor kernel (6.2)
 kernel-k8s-ch/       Cloud Hypervisor kernel with Kubernetes networking config
 ubuntu/              Ubuntu rootfs image with guest-agent
 rke2/                Airgapped RKE2 node rootfs image
-hack/                Repo-wide dev/CI scripts (e.g. check-no-modules.sh)
+hack/                Repo-wide dev/CI scripts (e.g. check-no-modules.sh) and the shared kernel tagging
 .github/workflows/   CI: per-image build-and-publish workflows, kernel-config lint
 ```
 

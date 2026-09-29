@@ -2,6 +2,17 @@ name: Kernel (CH) - Build and publish
 
 on:
   workflow_dispatch:
+    inputs:
+      build_id:
+        description: "Build id for the timestamped tags. Defaults to the current UTC time (YYYYMMDD-HHMM)."
+        required: false
+        type: string
+
+# One publish of this image at a time. Two runs that overlap can both find a
+# timestamped tag absent and then both push it.
+concurrency:
+  group: publish-cloudhypervisor-kernel
+  cancel-in-progress: false
 
 defaults:
   run:
@@ -23,6 +34,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # Resolved once so that make build and make push use the same value.
+      - name: Resolve build id
+        env:
+          BUILD_ID_INPUT: ${{ inputs.build_id }}
+        run: echo "BUILD_ID=${BUILD_ID_INPUT:-$(date -u +%Y%m%d-%H%M)}" >> "$GITHUB_ENV"
       - name: Build and push
         run: |
           make build
