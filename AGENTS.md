@@ -8,7 +8,7 @@ Guidance for coding agents working in this repository.
 
 ## Critical invariant: no loadable kernel modules
 
-Every kernel `.config` in this repo (`kernel-fc/`, `kernel-k8s-fc/`, `kernel-ch/`, `kernel-k8s-ch/`) must build required drivers directly into the kernel (`CONFIG_X=y`), never as a loadable module (`CONFIG_X=m`). MicroVMs boot with no initrd and no way to load modules at runtime, so a `=m` option is silently non-functional at best.
+Every kernel `.config` in this repo (`kernel-fc/`, `kernel-k8s-fc/`, `kernel-ch/`, `kernel-k8s-ch/`) must build required drivers directly into the kernel (`CONFIG_X=y`), never as a loadable module (`CONFIG_X=m`). MicroVMs have no way to load modules at runtime, with or without an initrd, so a `=m` option is silently non-functional at best.
 
 This is enforced in two places — **never bypass either**:
 
@@ -19,9 +19,10 @@ If a change requires a new kernel option, it must be added as `=y` (or left unse
 
 ## Kernel config conventions
 
-- Base kernel configs (`microvm-kernel-ci-x86_64-*.config`, or the Cloud Hypervisor `linux-config-x86_64`) are fetched from upstream Firecracker/Cloud Hypervisor projects at build time and must not be hand-edited — repo-specific additions live in each component's `configs/` directory (e.g. `configs/additional-61.config`, `configs/k8s_additions.config`).
-- `kernel-k8s-fc/` and `kernel-k8s-ch/` merge fragments with the kernel's own `scripts/kconfig/merge_config.sh` and then validate that every requested symbol actually survived Kconfig dependency resolution (the Dockerfile fails the build otherwise — `merge_config.sh` only warns).
-- `kernel-fc/` merges its single fragment with a plain `cat`.
+- Base kernel configs (`microvm-kernel-ci-x86_64-*.config`, or the Cloud Hypervisor `linux-config-x86_64`) are fetched from upstream Firecracker/Cloud Hypervisor projects at build time and must not be hand-edited — repo-specific additions live in each component's `configs/` directory (e.g. `configs/additional-61.config`, `configs/k8s_additions.config`). `kernel-k8s-ch/` is the exception: it has no `configs/` directory and keeps its fragments (`k8s_additions.config`, `erofs.config`) at the component root.
+- `kernel-k8s-fc/`, `kernel-k8s-ch/` and `kernel-ch/` merge fragments with the kernel's own `scripts/kconfig/merge_config.sh` and then validate that every requested symbol actually survived Kconfig dependency resolution (the Dockerfile fails the build otherwise — `merge_config.sh` only warns).
+- `erofs.config` exists once per kernel directory and every copy must be identical. Change all four together; `hack/check-fragments-match.sh` fails in CI when a copy is missing or differs. The lint workflow names each copy, so a new kernel component must be added to that list.
+- `kernel-fc/` concatenates its fragments onto the base config with `awk 1` in the `Makefile`, and its `Dockerfile` then checks that every fragment option survived. `awk 1` ends every line with a newline, so a fragment with no final newline cannot fuse with the one after it, as it would with `cat`.
 - Upstream config sources are pinned (Firecracker ref, Cloud Hypervisor tag/branch) for reproducibility — check the relevant `Makefile`/`Dockerfile` `ARG`s before changing a pin.
 
 ## Version pinning

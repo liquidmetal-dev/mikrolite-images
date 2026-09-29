@@ -46,7 +46,7 @@ RUN set -eu; frags=""; for f in ${KERNEL_FRAGMENTS}; do frags="$frags /tmp/k8s-c
 # (merge_config.sh only warns on drops).
 RUN set -eu; rc=0; \
     for f in ${KERNEL_FRAGMENTS}; do \
-      while IFS= read -r line; do \
+      while IFS= read -r line || [ -n "$line" ]; do \
         case "$line" in ''|\#*) continue;; esac; \
         sym=${line%%=*}; val=${line#*=}; \
         if [ "$val" = n ]; then want="# $sym is not set"; else want="$line"; fi; \
@@ -55,11 +55,11 @@ RUN set -eu; rc=0; \
         fi; \
       done < /tmp/k8s-configs/$f; \
     done; \
-    [ "$rc" -eq 0 ] || { echo 'ERROR: k8s options did not survive the config merge'; exit 1; }
+    [ "$rc" -eq 0 ] || { echo 'ERROR: fragment options did not survive the config merge'; exit 1; }
 
 # Fail the build if any option is enabled as a loadable module: microVM
-# images boot with no initrd/module filesystem, so a modular option is
-# silently non-functional.
+# images have no module filesystem and no way to load a module at runtime,
+# so a modular option is silently non-functional.
 RUN if grep -E '=m$' .config; then \
       echo "ERROR: kernel modules enabled above — all options must be y or disabled for microVM images" >&2; \
       exit 1; \

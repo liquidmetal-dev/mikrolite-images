@@ -34,24 +34,27 @@ ARG KERNEL_CONFIG
 
 RUN curl -fL -o .config ${KERNEL_CONFIG}
 COPY k8s_additions.config k8s_additions-fragment
-# Merge fragment into base, then let Kconfig resolve dependencies
-RUN ./scripts/kconfig/merge_config.sh -m .config k8s_additions-fragment \
+COPY erofs.config erofs-fragment
+# Merge the fragments into the base, then let Kconfig resolve dependencies
+RUN ./scripts/kconfig/merge_config.sh -m .config k8s_additions-fragment erofs-fragment \
  && make LOCALVERSION= olddefconfig
-# Fail the build if any requested k8s symbol did not survive dependency resolution
+# Fail the build if any requested symbol did not survive dependency resolution
 RUN set -eu; rc=0; \
-    while IFS= read -r line; do \
-      case "$line" in ''|\#*) continue;; esac; \
-      sym=${line%%=*}; val=${line#*=}; \
-      if [ "$val" = n ]; then want="# $sym is not set"; else want="$line"; fi; \
-      if ! grep -qxF "$want" .config; then \
-        echo "DROPPED: wanted [$want] got [$(grep -w "$sym" .config || echo absent)]"; rc=1; \
-      fi; \
-    done < k8s_additions-fragment; \
-    [ "$rc" -eq 0 ] || { echo 'ERROR: k8s options did not survive the config merge'; exit 1; }
+    for f in k8s_additions-fragment erofs-fragment; do \
+      while IFS= read -r line || [ -n "$line" ]; do \
+        case "$line" in ''|\#*) continue;; esac; \
+        sym=${line%%=*}; val=${line#*=}; \
+        if [ "$val" = n ]; then want="# $sym is not set"; else want="$line"; fi; \
+        if ! grep -qxF "$want" .config; then \
+          echo "DROPPED: wanted [$want] got [$(grep -w "$sym" .config || echo absent)]"; rc=1; \
+        fi; \
+      done < "$f"; \
+    done; \
+    [ "$rc" -eq 0 ] || { echo 'ERROR: fragment options did not survive the config merge'; exit 1; }
 
 # Fail the build if any option is enabled as a loadable module: microVM
-# images boot with no initrd/module filesystem, so a modular option is
-# silently non-functional.
+# images have no module filesystem and no way to load a module at runtime,
+# so a modular option is silently non-functional.
 RUN if grep -E '=m$' .config; then \
       echo "ERROR: kernel modules enabled above — all options must be y or disabled for microVM images" >&2; \
       exit 1; \

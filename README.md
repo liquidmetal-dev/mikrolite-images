@@ -29,7 +29,7 @@ and two rootfs flavours:
 
 ## Why the kernels have no loadable modules
 
-MicroVMs booted by Flintlock start straight into the kernel with no initrd and no mechanism to load kernel modules at runtime. Every driver a guest needs (virtio, networking, filesystem, etc.) must therefore be **built directly into the kernel** (`=y`), not built as a loadable module (`=m`).
+MicroVMs booted by Flintlock have no mechanism to load kernel modules at runtime. Most boot straight into the kernel with no initrd. Flintlock's overlay volume mode boots with an initrd that Flintlock provides, and that initrd carries no modules either. Every driver a guest needs (virtio, networking, filesystem, etc.) must therefore be **built directly into the kernel** (`=y`), not built as a loadable module (`=m`).
 
 This invariant is enforced twice:
 
@@ -47,7 +47,9 @@ This invariant is enforced twice:
 | [`ubuntu/`](ubuntu) | `ghcr.io/liquidmetal-dev/ubuntu` | Ubuntu `24.04` rootfs with networking, systemd and cloud-init configured, and [guest-agent](https://github.com/liquidmetal-dev/guest-agent) installed and enabled as a systemd service. |
 | [`rke2/`](rke2) | `ghcr.io/liquidmetal-dev/node-rke2-airgapped` | Ubuntu `22.04`-based RKE2 node rootfs, pre-loaded with RKE2 release artifacts for airgapped/offline installation. |
 
-Each kernel image is built from real upstream `linux-stable` source, using kernel `.config`s sourced from the Firecracker/Cloud Hypervisor projects and merged with the additional config fragments in each directory's `configs/` folder.
+Each kernel image is built from real upstream `linux-stable` source, using kernel `.config`s sourced from the Firecracker/Cloud Hypervisor projects and merged with the additional config fragments in each directory's `configs/` folder (`kernel-k8s-ch/` keeps its fragments at the directory root).
+
+Every kernel also gets the `erofs.config` fragment, which enables the EROFS filesystem. Flintlock's overlay volume mode presents the root filesystem as a read-only EROFS image. The fragment is copied into each kernel directory because each directory is its own docker build context; [`hack/check-fragments-match.sh`](hack/check-fragments-match.sh) fails the lint when a copy is missing or the copies differ.
 
 ## Building locally
 

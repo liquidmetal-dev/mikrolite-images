@@ -20,7 +20,7 @@ build: $(OUT_DIR)
 		-t $(IMAGE_NAME):6.1 \
 		--build-arg KERNEL_VERSION=6.1 \
 		--build-arg KERNEL_CONFIG=$(OUT_DIR)/microvm-kernel-ci-x86_64-6.1.config \
-		--build-arg KERNEL_FRAGMENTS="additional-61.config k8s_additions.config" \
+		--build-arg KERNEL_FRAGMENTS="additional-61.config k8s_additions.config erofs.config" \
 		.
 
 	curl -fL -o $(OUT_DIR)/microvm-kernel-ci-x86_64-5.10.config $(GUEST_CONFIG_URL_510)/microvm-kernel-ci-x86_64-5.10.config
@@ -28,7 +28,7 @@ build: $(OUT_DIR)
 		-t $(IMAGE_NAME):5.10 \
 		--build-arg KERNEL_VERSION=5.10.199 \
 		--build-arg KERNEL_CONFIG=$(OUT_DIR)/microvm-kernel-ci-x86_64-5.10.config \
-		--build-arg KERNEL_FRAGMENTS="k8s_additions.config" \
+		--build-arg KERNEL_FRAGMENTS="k8s_additions.config erofs.config" \
 		.
 
 push:
