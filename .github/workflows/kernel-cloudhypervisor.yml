@@ -8,6 +8,12 @@ on:
         required: false
         type: string
 
+# One publish of this image at a time. Two runs that overlap can both find a
+# timestamped tag absent and then both push it.
+concurrency:
+  group: publish-cloudhypervisor-kernel
+  cancel-in-progress: false
+
 defaults:
   run:
     working-directory: kernel-ch
